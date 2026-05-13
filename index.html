@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ρολόι Εξετάσεων</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1b2a;--navy2:#162236;--navy3:#1e2f45;
+  --gold:#c9a84c;--gold2:#e8c96a;
+  --white:#f0f4f8;--muted:#8fa3b8;
+  --red:#e05050;--green:#4caf82;--orange:#e08050;
+  --card:#1a2d42;--border:#2a3f5a;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--navy);color:var(--white);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;display:flex;flex-direction:column;height:100vh}
+#topbar{background:var(--navy2);border-bottom:1px solid var(--border);padding:10px 16px;flex-shrink:0}
+.topbar-title{text-align:center;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:8px}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.fields-row2{display:grid;grid-template-columns:1fr 1fr 155px 155px auto auto;gap:8px;margin-top:8px;align-items:end}
+.field-group{display:flex;flex-direction:column;gap:3px}
+.field-group label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.field-group input,.field-group select{background:var(--navy3);border:1px solid var(--border);color:var(--white);padding:6px 10px;border-radius:6px;font-size:13px;outline:none;width:100%;transition:border-color .2s}
+.field-group input:focus,.field-group select:focus{border-color:var(--gold)}
+.field-group select option{background:var(--navy3)}
+.field-group input[type=time]{color:var(--gold);font-size:14px;font-weight:600;letter-spacing:1px}
+#btnStart{background:var(--gold);color:var(--navy);font-weight:700;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;letter-spacing:1px;white-space:nowrap;transition:all .2s;height:34px}
+#btnStart:hover{background:var(--gold2)}
+#btnReset{background:transparent;color:var(--muted);font-weight:600;border:1px solid var(--border);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;letter-spacing:.5px;white-space:nowrap;transition:all .2s;height:34px}
+#btnReset:hover{color:var(--red);border-color:var(--red)}
+#actionbar{background:var(--navy2);border-bottom:1px solid var(--border);padding:6px 16px;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.ctab{background:var(--navy3);color:var(--muted);border:1px solid var(--border);padding:4px 12px;border-radius:4px;cursor:pointer;font-size:11px;letter-spacing:1px;transition:all .2s}
+.ctab.active{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:700}
+.abtn{background:var(--navy3);color:var(--muted);border:1px solid var(--border);padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .2s}
+.abtn:hover{color:var(--white);border-color:var(--gold)}
+.abtn.active{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:700}
+#pauseBanner{display:none;background:#7a4500;color:#ffd580;padding:4px 14px;border-radius:5px;font-size:12px;font-weight:600;letter-spacing:1px;border:1px solid var(--orange);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.spacer{flex:1}
+#btnFS{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:16px;transition:all .2s}
+#btnFS:hover{color:var(--gold);border-color:var(--gold)}
+#main{flex:1;display:flex;overflow:hidden;min-height:0}
+#clockSection{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:8px}
+#analogClock{display:block}
+#digitalClock{font-size:72px;font-family:'Courier New',monospace;color:var(--white);letter-spacing:6px;display:none}
+#countdownDisplay{font-family:'Courier New',monospace;color:var(--gold);letter-spacing:4px;display:none;text-align:center}
+#countdownDisplay .cd-label{font-size:10px;letter-spacing:4px;color:var(--muted);margin-bottom:2px}
+#countdownDisplay .cd-time{font-size:60px}
+#countdownDisplay .cd-label2{font-size:10px;letter-spacing:3px;color:var(--muted);margin-top:6px}
+#fsSubject{display:none;font-size:17px;color:rgba(240,244,248,.72);letter-spacing:3px;text-align:center;text-transform:uppercase}
+body.fullscreen #fsSubject{display:block}
+.clock-date{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+#kpiSection{width:222px;background:var(--navy2);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:14px 12px;flex-shrink:0;overflow-y:auto}
+.kpi-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:center;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:8px;transition:background .5s,border-color .5s}
+.kpi-card .kpi-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+.kpi-card .kpi-value{font-size:24px;font-family:'Courier New',monospace;font-weight:700;color:var(--white);letter-spacing:2px}
+.kpi-card .kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.kpi-start .kpi-value{color:var(--green)}
+.kpi-dep .kpi-value{color:var(--orange)}
+.kpi-end .kpi-value{color:var(--red)}
+.kpi-cd .kpi-value{color:var(--gold);font-size:19px}
+.kpi-dep.dep-ok{border-color:var(--green)!important;background:#0b2218!important}
+.kpi-dep.dep-ok .kpi-value{color:var(--green)!important;font-size:14px;line-height:1.4}
+.kpi-dep.dep-ok .kpi-sub{color:#6fcf97}
+.kpi-end.alert-30{border-color:var(--orange);background:#2a1e10}
+.kpi-end.alert-15{border-color:var(--red);background:#2a1010}
+.info-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 13px;margin-bottom:8px}
+.info-row{display:flex;justify-content:space-between;gap:4px;margin-bottom:3px}
+.info-row:last-child{margin-bottom:0}
+.info-key{color:var(--muted);font-size:9px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.info-val{color:var(--white);font-weight:600;text-align:right;font-size:11px;max-width:118px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.fullscreen #topbar{display:none}
+body.fullscreen #actionbar{display:none}
+body.fullscreen #kpiSection{width:252px;padding:18px 14px}
+body.fullscreen .kpi-value{font-size:30px!important}
+body.fullscreen .kpi-cd .kpi-value{font-size:23px!important}
+body.fullscreen .kpi-dep.dep-ok .kpi-value{font-size:16px!important}
+body.fullscreen #digitalClock{font-size:100px}
+body.fullscreen #countdownDisplay .cd-time{font-size:90px}
+#flashOverlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0;z-index:999;transition:opacity .2s}
+#endScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#8b0000;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:1000;cursor:pointer}
+#endScreen h1{font-size:80px;font-family:'Courier New',monospace;color:#fff;letter-spacing:8px;animation:endBlink 1s infinite}
+#endScreen p{color:#ffaaaa;font-size:18px;letter-spacing:3px;margin-top:20px}
+@keyframes endBlink{0%,100%{opacity:1}50%{opacity:.15}}
+#settingsPanel{position:fixed;top:0;right:-360px;width:340px;height:100%;background:var(--navy2);border-left:1px solid var(--border);z-index:500;transition:right .3s;padding:20px;overflow-y:auto}
+#settingsPanel h2{font-size:14px;letter-spacing:3px;color:var(--gold);margin-bottom:20px;text-transform:uppercase}
+#settingsPanel.open{right:0}
+.setting-section{margin-bottom:22px;border-bottom:1px solid var(--border);padding-bottom:18px}
+.setting-section h3{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;color:var(--white)}
+.toggle{position:relative;width:40px;height:22px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.slider-t{position:absolute;inset:0;background:var(--border);border-radius:11px;transition:.3s}
+.slider-t:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:.3s}
+.toggle input:checked+.slider-t{background:var(--gold)}
+.toggle input:checked+.slider-t:before{transform:translateX(18px);background:var(--navy)}
+.ext-btns{display:flex;gap:8px;flex-wrap:wrap}
+.ext-btn{background:var(--navy3);color:var(--gold);border:1px solid var(--border);padding:6px 14px;border-radius:5px;cursor:pointer;font-size:13px;transition:all .2s}
+.ext-btn:hover{background:var(--gold);color:var(--navy)}
+.close-s{position:absolute;top:16px;right:16px;background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.close-s:hover{border-color:var(--gold);color:var(--gold)}
+.preset-btn{width:100%;background:var(--navy3);color:var(--white);border:1px solid var(--border);padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12px;text-align:left;margin-bottom:8px;transition:all .2s}
+.preset-btn:hover{border-color:var(--gold);color:var(--gold)}
+.test-btn{width:100%;background:var(--navy3);color:var(--muted);border:1px solid var(--border);padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12px;text-align:center;margin-top:10px;transition:all .2s}
+.test-btn:hover{border-color:var(--green);color:var(--green)}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="topbar-title">Ρολόι Εξετάσεων</div>
+  <div class="fields-grid">
+    <div class="field-group"><label>Σχολείο</label><input type="text" id="fSchool" placeholder="Όνομα σχολείου..."></div>
+    <div class="field-group"><label>Τάξη</label><input type="text" id="fClass" placeholder="π.χ. Γ΄ Λυκείου..."></div>
+    <div class="field-group"><label>Μάθημα</label><input type="text" id="fSubject" placeholder="Μάθημα..."></div>
+    <div class="field-group">
+      <label>Είδος Εξετάσεων</label>
+      <select id="fExamType">
+        <option value="">— Επιλογή —</option>
+        <option>Προαγωγικές Εξετάσεις</option>
+        <option>Απολυτήριες Εξετάσεις</option>
+        <option>Πανελλήνιες Εξετάσεις</option>
+      </select>
+    </div>
+  </div>
+  <div class="fields-row2">
+    <div class="field-group"><label>Εισηγητές</label><input type="text" id="fTeachers" placeholder="Ονόματα εισηγητών..."></div>
+    <div class="field-group"><label>Επιτηρητές</label><input type="text" id="fSupervisors" placeholder="Ονόματα επιτηρητών..."></div>
+    <div class="field-group"><label>Δυνατή Αποχώρηση</label><input type="time" id="fDeparture"></div>
+    <div class="field-group"><label>Λήξη</label><input type="time" id="fEnd"></div>
+    <button id="btnStart">▶ ΕΚΚΙΝΗΣΗ</button>
+    <button id="btnReset">↺ Καθαρισμός</button>
+  </div>
+</div>
+
+<div id="actionbar">
+  <button class="ctab active" id="tabAnalog" onclick="switchTab('analog')">Αναλογικό</button>
+  <button class="ctab" id="tabDigital" onclick="switchTab('digital')">Ψηφιακό</button>
+  <button class="ctab" id="tabCountdown" onclick="switchTab('countdown')">Αντίστροφη</button>
+  <div style="width:1px;background:var(--border);height:20px;margin:0 4px"></div>
+  <button class="abtn" id="btnPause" onclick="togglePause()">⏸ Παύση</button>
+  <div id="pauseBanner">⏸ ΣΕ ΠΑΥΣΗ — Ο χρόνος λήξης παρατείνεται αυτόματα</div>
+  <div class="spacer"></div>
+  <button class="abtn" onclick="openSettings()">⚙ Ρυθμίσεις</button>
+  <button id="btnFS" onclick="toggleFS()">⛶</button>
+</div>
+
+<div id="main">
+  <div id="clockSection">
+    <canvas id="analogClock" width="320" height="320"></canvas>
+    <div id="digitalClock">00:00:00</div>
+    <div id="countdownDisplay">
+      <div class="cd-label">ΑΝΤΙΣΤΡΟΦΗ ΜΕΤΡΗΣΗ</div>
+      <div class="cd-time" id="cdTime">--:--:--</div>
+      <div class="cd-label2">ΜΕΧΡΙ ΤΗ ΛΗΞΗ</div>
+    </div>
+    <div id="fsSubject"></div>
+    <div class="clock-date" id="clockDate"></div>
+  </div>
+
+  <div id="kpiSection">
+    <div class="kpi-title">Χρόνοι</div>
+    <div class="info-card" id="infoCard" style="display:none">
+      <div class="info-row"><span class="info-key">Σχολείο</span><span class="info-val" id="iSchool">—</span></div>
+      <div class="info-row"><span class="info-key">Τάξη</span><span class="info-val" id="iClass">—</span></div>
+      <div class="info-row"><span class="info-key">Είδος</span><span class="info-val" id="iType">—</span></div>
+      <div class="info-row"><span class="info-key">Εισηγητές</span><span class="info-val" id="iTeachers">—</span></div>
+      <div class="info-row"><span class="info-key">Επιτηρητές</span><span class="info-val" id="iSuperv">—</span></div>
+    </div>
+    <div class="kpi-card kpi-start">
+      <div class="kpi-label">Έναρξη</div>
+      <div class="kpi-value" id="kpiStart">--:--</div>
+      <div class="kpi-sub" id="kpiStartSub">—</div>
+    </div>
+    <div class="kpi-card kpi-dep" id="kpiDepCard">
+      <div class="kpi-label">Δυνατή Αποχώρηση</div>
+      <div class="kpi-value" id="kpiDep">--:--</div>
+      <div class="kpi-sub" id="kpiDepSub">—</div>
+    </div>
+    <div class="kpi-card kpi-end" id="kpiEndCard">
+      <div class="kpi-label">Λήξη</div>
+      <div class="kpi-value" id="kpiEnd">--:--</div>
+      <div class="kpi-sub" id="kpiEndSub">—</div>
+    </div>
+    <div class="kpi-card kpi-cd">
+      <div class="kpi-label">Απομένουν μέχρι Λήξη</div>
+      <div class="kpi-value" id="kpiCd">--:--:--</div>
+    </div>
+  </div>
+</div>
+
+<div id="flashOverlay"></div>
+<div id="endScreen" onclick="this.style.display='none'">
+  <h1>ΛΗΞΗ ΕΞΕΤΑΣΗΣ</h1><p>Κάντε κλικ για κλείσιμο</p>
+</div>
+
+<div id="settingsPanel">
+  <button class="close-s" onclick="closeSettings()">✕</button>
+  <h2>⚙ Ρυθμίσεις</h2>
+  <div class="setting-section">
+    <h3>Παράταση Χρόνου</h3>
+    <div class="ext-btns">
+      <button class="ext-btn" onclick="extendTime(1)">+1 λεπτό</button>
+      <button class="ext-btn" onclick="extendTime(5)">+5 λεπτά</button>
+      <button class="ext-btn" onclick="extendTime(15)">+15 λεπτά</button>
+    </div>
+  </div>
+  <div class="setting-section">
+    <h3>Ειδοποιήσεις</h3>
+    <div class="toggle-row"><span>Ήχος στα 30 λεπτά</span><label class="toggle"><input type="checkbox" id="snd30" checked><span class="slider-t"></span></label></div>
+    <div class="toggle-row"><span>Φλας οθόνης στα 30'</span><label class="toggle"><input type="checkbox" id="flash30" checked><span class="slider-t"></span></label></div>
+    <div class="toggle-row"><span>Ήχος στα 15 λεπτά</span><label class="toggle"><input type="checkbox" id="snd15" checked><span class="slider-t"></span></label></div>
+    <div class="toggle-row"><span>Φλας οθόνης στα 15'</span><label class="toggle"><input type="checkbox" id="flash15" checked><span class="slider-t"></span></label></div>
+    <div class="toggle-row"><span>Αυτόματη οθόνη ΛΗΞΗ</span><label class="toggle"><input type="checkbox" id="autoEnd"><span class="slider-t"></span></label></div>
+    <button class="test-btn" onclick="testSound()">🔊 Δοκιμή Ήχου</button>
+  </div>
+  <div class="setting-section">
+    <h3>Προεπιλογές</h3>
+    <button class="preset-btn" onclick="applyPreset(120,60)">📋 Τυπικά ΓΕΛ / ΕΠΑΛ — 2 ώρες, αποχώρηση μετά 1ω</button>
+    <button class="preset-btn" onclick="applyPreset(180,90)">📋 Νεοελληνική Λογοτεχνία — 3 ώρες, αποχώρηση μετά 1ω 30'</button>
+    <button class="preset-btn" onclick="applyPreset(150,60)">📋 Μαθηματικά ΓΕΛ — 2,5 ώρες, αποχώρηση μετά 1ω</button>
+  </div>
+  <div class="setting-section" style="border:none">
+    <h3>Μέγεθος Ρολογιού</h3>
+    <div style="font-size:12px;color:var(--muted)">Μέγεθος: <span id="clockSizeVal">320</span>px
+      <input type="range" min="180" max="500" value="320" style="width:100%;margin:6px 0;accent-color:var(--gold)" oninput="resizeClock(this.value)">
+    </div>
+  </div>
+</div>
+
+<div style="position:fixed;bottom:6px;right:12px;font-size:10px;color:#2a3f5a;letter-spacing:1px;pointer-events:none;user-select:none">Σχεδίαση: Κοραλία Τζαννή </div>
+
+<script>
+let startTime=null,endTime=null,depTime=null;
+let paused=false,pauseStart=null;
+let notified30=false,notified15=false,examRunning=false,clockSize=320;
+let audioCtx=null;
+const TITLE='Ρολόι Εξετάσεων';
+
+function tick(){
+  const now=new Date();
+  updateDate(now);drawAnalog(now);updateDigital(now);updateCountdown(now);updateKPI(now);
+}
+
+function updateDate(now){
+  const D=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+  const M=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+  document.getElementById('clockDate').textContent=D[now.getDay()]+', '+now.getDate()+' '+M[now.getMonth()]+' '+now.getFullYear();
+}
+
+function drawAnalog(now){
+  const cv=document.getElementById('analogClock'),ctx=cv.getContext('2d'),S=clockSize;
+  cv.width=S;cv.height=S;
+  const cx=S/2,cy=S/2,r=S/2-10;
+  ctx.clearRect(0,0,S,S);
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.fillStyle='#162236';ctx.fill();
+  ctx.lineWidth=2;ctx.strokeStyle='#c9a84c';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r-4,0,2*Math.PI);ctx.lineWidth=1;ctx.strokeStyle='#2a3f5a';ctx.stroke();
+  for(let i=0;i<12;i++){
+    const a=(i*30-90)*Math.PI/180;
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(r-14),cy+Math.sin(a)*(r-14));
+    ctx.lineTo(cx+Math.cos(a)*(r-26),cy+Math.sin(a)*(r-26));
+    ctx.lineWidth=i%3===0?3:1.5;ctx.strokeStyle=i%3===0?'#c9a84c':'#4a6a8a';ctx.stroke();
+  }
+  for(let i=0;i<60;i++){
+    if(i%5===0)continue;
+    const a=(i*6-90)*Math.PI/180;
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(r-14),cy+Math.sin(a)*(r-14));
+    ctx.lineTo(cx+Math.cos(a)*(r-18),cy+Math.sin(a)*(r-18));
+    ctx.lineWidth=1;ctx.strokeStyle='#2a4060';ctx.stroke();
+  }
+  ctx.fillStyle='#8fa3b8';ctx.font='bold '+Math.round(S*0.052)+'px Segoe UI,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=1;i<=12;i++){const a=(i*30-90)*Math.PI/180;ctx.fillText(i,cx+Math.cos(a)*(r-38),cy+Math.sin(a)*(r-38));}
+  if(endTime){
+    const ns=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+    const es=endTime.getHours()*3600+endTime.getMinutes()*60+endTime.getSeconds();
+    const rem=es-ns;
+    if(rem>0){
+      const ea=((endTime.getHours()%12)*30+endTime.getMinutes()*0.5-90)*Math.PI/180;
+      const na=(((now.getHours()%12)*30+now.getMinutes()*0.5+now.getSeconds()*0.00833)-90)*Math.PI/180;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r-14,na,ea);ctx.closePath();
+      ctx.fillStyle=rem<900?'rgba(224,80,80,0.13)':rem<1800?'rgba(224,128,80,0.11)':'rgba(201,168,76,0.09)';ctx.fill();
+    }
+  }
+  const h=now.getHours()%12+now.getMinutes()/60+now.getSeconds()/3600;
+  drawHand(ctx,cx,cy,(h*30-90)*Math.PI/180,r*0.52,4,'#e8c96a');
+  drawHand(ctx,cx,cy,(now.getMinutes()*6+now.getSeconds()*0.1-90)*Math.PI/180,r*0.74,2.5,'#f0f4f8');
+  drawHand(ctx,cx,cy,(now.getSeconds()*6-90)*Math.PI/180,r*0.82,1.5,'#e05050');
+  ctx.beginPath();ctx.arc(cx,cy,5,0,2*Math.PI);ctx.fillStyle='#e8c96a';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,2,0,2*Math.PI);ctx.fillStyle='#0d1b2a';ctx.fill();
+}
+
+function drawHand(ctx,cx,cy,angle,len,width,color){
+  ctx.beginPath();ctx.moveTo(cx-Math.cos(angle)*len*0.2,cy-Math.sin(angle)*len*0.2);
+  ctx.lineTo(cx+Math.cos(angle)*len,cy+Math.sin(angle)*len);
+  ctx.lineWidth=width;ctx.strokeStyle=color;ctx.lineCap='round';ctx.stroke();
+}
+
+function updateDigital(now){
+  document.getElementById('digitalClock').textContent=pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+}
+
+function updateCountdown(now){
+  if(!endTime||!examRunning){document.getElementById('cdTime').textContent='--:--:--';return;}
+  const d=Math.max(0,endTime-now)/1000;
+  document.getElementById('cdTime').textContent=pad(Math.floor(d/3600))+':'+pad(Math.floor((d%3600)/60))+':'+pad(Math.floor(d%60));
+}
+
+function updateKPI(now){
+  if(startTime)document.getElementById('kpiStart').textContent=fmt(startTime);
+  if(depTime){
+    document.getElementById('kpiDep').textContent=fmt(depTime);
+    const depCard=document.getElementById('kpiDepCard');
+    const dd=(depTime-now)/1000;
+    if(dd>0){
+      depCard.classList.remove('dep-ok');
+      document.getElementById('kpiDepSub').textContent='σε '+Math.floor(dd/60)+'\'  '+pad(dd%60)+'"';
+    } else {
+      depCard.classList.add('dep-ok');
+      document.getElementById('kpiDep').textContent='✓ Επιτρέπεται';
+      document.getElementById('kpiDepSub').textContent='Αποχώρηση επιτρέπεται';
+    }
+  }
+  if(!endTime||!examRunning)return;
+  document.getElementById('kpiEnd').textContent=fmt(endTime);
+  const rem=(endTime-now)/1000;
+  if(rem<=0){
+    document.getElementById('kpiEndSub').textContent='ΕΛΗΞΕ';
+    document.getElementById('kpiCd').textContent='00:00:00';
+    document.getElementById('kpiEndCard').classList.add('alert-15');
+    document.title='🔴 ΛΗΞΗ | '+TITLE;
+    if(document.getElementById('autoEnd').checked)document.getElementById('endScreen').style.display='flex';
+    return;
+  }
+  const hh=Math.floor(rem/3600),mm=Math.floor((rem%3600)/60),ss=Math.floor(rem%60);
+  document.getElementById('kpiCd').textContent=pad(hh)+':'+pad(mm)+':'+pad(ss);
+  document.getElementById('kpiEndSub').textContent='σε '+Math.floor(rem/60)+'\'  '+pad(ss)+'"';
+  document.title='⏱ '+pad(hh)+':'+pad(mm)+':'+pad(ss)+' | '+TITLE;
+  if(rem<=1800&&rem>1790&&!notified30){notified30=true;doAlert(30);}
+  if(rem<=900&&rem>890&&!notified15){notified15=true;doAlert(15);}
+  const ec=document.getElementById('kpiEndCard');
+  ec.classList.remove('alert-30','alert-15');ec.style.background='';
+  if(rem<900)ec.classList.add('alert-15');
+  else if(rem<1800)ec.classList.add('alert-30');
+}
+
+function doAlert(m){
+  if(document.getElementById(m===30?'snd30':'snd15').checked)playBeep(m===30?880:1100);
+  if(document.getElementById(m===30?'flash30':'flash15').checked)flashScreen(m===30?'#c9a84c':'#e05050');
+}
+
+function playBeep(freq){
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,220,440].forEach(d=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.connect(g);g.connect(audioCtx.destination);
+      o.frequency.value=freq;o.type='sine';
+      g.gain.setValueAtTime(0.4,audioCtx.currentTime+d/1000);
+      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000+0.45);
+      o.start(audioCtx.currentTime+d/1000);o.stop(audioCtx.currentTime+d/1000+0.5);
+    });
+  }catch(e){}
+}
+
+function testSound(){
+  try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  playBeep(880);setTimeout(()=>playBeep(1100),750);
+}
+
+function flashScreen(color){
+  const el=document.getElementById('flashOverlay');
+  el.style.background=color;el.style.opacity='0.35';
+  setTimeout(()=>{el.style.opacity='0';},600);
+  setTimeout(()=>{el.style.background=color;el.style.opacity='0.25';setTimeout(()=>{el.style.opacity='0';},500);},900);
+}
+
+document.getElementById('btnStart').addEventListener('click',()=>{
+  const ev=document.getElementById('fEnd').value;
+  if(!ev){alert('Παρακαλώ ορίστε ώρα Λήξης.');return;}
+  try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  startTime=new Date();
+  const[eh,em]=ev.split(':').map(Number);
+  endTime=new Date();endTime.setHours(eh,em,0,0);
+  if(endTime<=startTime)endTime.setDate(endTime.getDate()+1);
+  const dv=document.getElementById('fDeparture').value;
+  if(dv){
+    const[dh,dm]=dv.split(':').map(Number);
+    depTime=new Date();depTime.setHours(dh,dm,0,0);
+    if(depTime<=startTime)depTime.setDate(depTime.getDate()+1);
+  }
+  examRunning=true;notified30=false;notified15=false;paused=false;
+  const s=document.getElementById('fSchool').value,c=document.getElementById('fClass').value,
+        sb=document.getElementById('fSubject').value,t=document.getElementById('fExamType').value,
+        tc=document.getElementById('fTeachers').value,sp=document.getElementById('fSupervisors').value;
+  if(s||c||sb||t||tc||sp){
+    document.getElementById('infoCard').style.display='block';
+    document.getElementById('iSchool').textContent=s||'—';document.getElementById('iClass').textContent=c||'—';
+    document.getElementById('iType').textContent=t||'—';document.getElementById('iTeachers').textContent=tc||'—';
+    document.getElementById('iSuperv').textContent=sp||'—';
+  }
+  document.getElementById('fsSubject').textContent=sb||'';
+  playBeep(660);
+});
+
+document.getElementById('btnReset').addEventListener('click',()=>{
+  if(examRunning&&!confirm('Να γίνει καθαρισμός και επαναφορά;'))return;
+  startTime=null;endTime=null;depTime=null;paused=false;pauseStart=null;
+  notified30=false;notified15=false;examRunning=false;
+  ['fSchool','fClass','fSubject','fTeachers','fSupervisors'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fExamType').value='';
+  document.getElementById('kpiStart').textContent='--:--';document.getElementById('kpiStartSub').textContent='—';
+  document.getElementById('kpiDep').textContent='--:--';document.getElementById('kpiDepSub').textContent='—';
+  document.getElementById('kpiEnd').textContent='--:--';document.getElementById('kpiEndSub').textContent='—';
+  document.getElementById('kpiCd').textContent='--:--:--';
+  document.getElementById('kpiDepCard').classList.remove('dep-ok');
+  const ec=document.getElementById('kpiEndCard');ec.classList.remove('alert-30','alert-15');ec.style.background='';
+  document.getElementById('btnPause').textContent='⏸ Παύση';
+  document.getElementById('btnPause').classList.remove('active');
+  document.getElementById('pauseBanner').style.display='none';
+  document.getElementById('infoCard').style.display='none';
+  document.getElementById('fsSubject').textContent='';
+  document.getElementById('endScreen').style.display='none';
+  document.title=TITLE;
+  setDefaultTimes();
+});
+
+function togglePause(){
+  if(!examRunning)return;
+  paused=!paused;
+  const btn=document.getElementById('btnPause'),ban=document.getElementById('pauseBanner');
+  if(paused){pauseStart=new Date();btn.textContent='▶ Συνέχεια';btn.classList.add('active');ban.style.display='block';}
+  else{
+    const pf=new Date()-pauseStart;
+    endTime=new Date(endTime.getTime()+pf);
+    if(depTime)depTime=new Date(depTime.getTime()+pf);
+    pauseStart=null;btn.textContent='⏸ Παύση';btn.classList.remove('active');ban.style.display='none';
+  }
+}
+
+function extendTime(m){
+  const ms=m*60000;
+  if(endTime)endTime=new Date(endTime.getTime()+ms);
+  if(depTime)depTime=new Date(depTime.getTime()+ms);
+}
+
+function applyPreset(dur,dep){
+  const now=new Date(),e=new Date(now.getTime()+dur*60000),d=new Date(now.getTime()+dep*60000);
+  document.getElementById('fEnd').value=pad(e.getHours())+':'+pad(e.getMinutes());
+  document.getElementById('fDeparture').value=pad(d.getHours())+':'+pad(d.getMinutes());
+  closeSettings();
+}
+
+function switchTab(tab){
+  document.getElementById('analogClock').style.display=tab==='analog'?'block':'none';
+  document.getElementById('digitalClock').style.display=tab==='digital'?'block':'none';
+  document.getElementById('countdownDisplay').style.display=tab==='countdown'?'block':'none';
+  ['tabAnalog','tabDigital','tabCountdown'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+}
+
+let isFS=false;
+function toggleFS(){
+  isFS=!isFS;document.body.classList.toggle('fullscreen',isFS);
+  document.getElementById('btnFS').textContent=isFS?'✕ Έξοδος':'⛶';
+  if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
+  else if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isFS){isFS=false;document.body.classList.remove('fullscreen');document.getElementById('btnFS').textContent='⛶';}});
+
+function openSettings(){document.getElementById('settingsPanel').classList.add('open');}
+function closeSettings(){document.getElementById('settingsPanel').classList.remove('open');}
+function resizeClock(v){clockSize=parseInt(v);document.getElementById('clockSizeVal').textContent=v;}
+
+function setDefaultTimes(){
+  const now=new Date(),dep=new Date(now.getTime()+3600000),end=new Date(now.getTime()+7200000);
+  document.getElementById('fDeparture').value=pad(dep.getHours())+':'+pad(dep.getMinutes());
+  document.getElementById('fEnd').value=pad(end.getHours())+':'+pad(end.getMinutes());
+}
+function pad(n){return String(Math.floor(n)).padStart(2,'0');}
+function fmt(d){return d?pad(d.getHours())+':'+pad(d.getMinutes()):'--:--';}
+
+setDefaultTimes();switchTab('analog');setInterval(tick,1000);tick();
+</script>
+</body>
+</html>
