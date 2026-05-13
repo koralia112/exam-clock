@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ρολόι Εξετάσεων</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -485,5 +487,12 @@ function fmt(d){return d?pad(d.getHours())+':'+pad(d.getMinutes()):'--:--';}
 
 setDefaultTimes();switchTab('analog');setInterval(tick,1000);tick();
 </script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js");
+    });
+  }
+</script>  
 </body>
 </html>
